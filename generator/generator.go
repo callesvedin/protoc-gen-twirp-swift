@@ -5,11 +5,11 @@ import (
 	"path"
 )
 
-func dartModuleFilename(f *descriptor.FileDescriptorProto) string {
-	return twirpFilename(*f.Package,*f.Name)
+func swiftModuleFilename(f *descriptor.FileDescriptorProto) string {
+	return twirpFilename(*f.Package, *f.Name)
 }
 
-func dartFilename(name string) string {
+func swiftFilename(name string) string {
 	if ext := path.Ext(name); ext == ".proto" || ext == ".protodevel" {
 		base := path.Base(name)
 		name = base[:len(base)-len(path.Ext(base))]
@@ -26,7 +26,7 @@ func twirpFilename(prefix, fullPath string) string {
 		base := path.Base(fullPath)
 		name = base[:len(base)-len(path.Ext(base))]
 	}
-	name = prefix+"."+name
+	name = prefix + "." + name
 	name += ".twirp.swift"
 	return path.Join(path.Dir(fullPath), name)
 }

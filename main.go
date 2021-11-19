@@ -1,22 +1,23 @@
 package main
 
 import (
+	"github.com/callesvedin/protoc-gen-twirp-swift/generator"
+	"github.com/gogo/protobuf/proto"
+	gogogen "github.com/gogo/protobuf/protoc-gen-gogo/generator"
+	plugin_go "github.com/gogo/protobuf/protoc-gen-gogo/plugin"
 	"io"
 	"io/ioutil"
 	"os"
 	"strings"
-	"github.com/gogo/protobuf/proto"
-	"github.com/callesvedin/twirp-swift/generator"
-	gogogen "github.com/gogo/protobuf/protoc-gen-gogo/generator"
-	plugin_go "github.com/gogo/protobuf/protoc-gen-gogo/plugin"
 )
 
 func main() {
-	//bs, err := ioutil.ReadFile("./activty.bs")
+	//bs, err := ioutil.ReadFile("./input.bs")
 	//if err != nil {
 	//	return
 	//}
 	//req := readRequest(bytes.NewReader(bs))
+
 	req := readRequest(os.Stdin)
 	writeResponse(os.Stdout, generate(req))
 }
@@ -26,7 +27,7 @@ func readRequest(r io.Reader) *plugin_go.CodeGeneratorRequest {
 	if err != nil {
 		panic(err)
 	}
-	//ioutil.WriteFile("activty.bs", data, 0644)
+	//ioutil.WriteFile("cca_input.bs", data, 0644)
 
 	req := new(plugin_go.CodeGeneratorRequest)
 	if err = proto.Unmarshal(data, req); err != nil {
@@ -80,7 +81,7 @@ func writeResponse(w io.Writer, resp *plugin_go.CodeGeneratorResponse) {
 	if err != nil {
 
 	}
-	//ioutil.WriteFile("activty.test.swift", data, 0644)
+	//ioutil.WriteFile("output.swift", data, 0644)
 }
 
 type Params map[string]string
