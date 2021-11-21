@@ -1,0 +1,358 @@
+syntax = "proto3";
+
+package card.v0;
+
+// Card 服务
+service Card {
+    // 添加漫读卡档位
+    rpc AddCardSet(CardSet) returns (DefaultResponse);
+    // 列出漫读卡档位
+    rpc ListCardSets(ListCardSetsReq) returns (ListCardSetsResp);
+    // 编辑漫读卡档位
+    rpc EditCardSet(CardSet) returns (DefaultResponse);
+    // 添加漫读卡档位组
+    rpc AddCardSetGroup(CardSetGroup) returns (DefaultResponse);
+    // 列出漫读卡档位组
+    rpc ListCardSetGroups(ListCardSetGroupsReq) returns (ListCardSetGroupsResp);
+    // 编辑漫读卡档位组
+    rpc EditCardSetGroup(CardSetGroup) returns (DefaultResponse);
+    // 删除漫读卡档位组
+    rpc DeleteCardSetGroup(DefaultDeleteReq) returns (DefaultResponse);
+    // 查询用户开通畅读卡信息
+    rpc GetUserCardInfo(UserCardInfoReq) returns (UserCardInfoResp);
+    // 添加卡面
+    rpc AddCardCover (AddCardCoverReq) returns (DefaultResponseWithIDResp);
+    // 编辑卡面
+    rpc EditCardCover (AddCardCoverReq) returns (DefaultResponse);
+    // 删除卡面
+    rpc DelCardCover (DelCardCoverReq) returns (DefaultResponse);
+    // 卡面列表
+    rpc ListCardCovers (ListCardCoversReq) returns (ListCardCoversResp);
+    // 卡面发放/畅读卡发放
+    rpc AddSendPlan (AddSendPlanReq) returns (DefaultResponseWithIDResp);
+    // 卡面/畅读卡发放计划查询
+    rpc ListSendPlans (ListSendPlansReq) returns (ListSendPlansResp);
+}
+
+message EmptyData {
+}
+
+message DefaultResponseWithIDResp {
+    int32 code = 1;
+    string msg = 2;
+    DataWithID data = 3;
+}
+
+message DataWithID {
+    int32 id = 1;
+}
+
+message ListCardSetsReq {
+    // 页码
+    int32 page_num = 1;
+    // 每页数量
+    int32 page_size = 2;
+    // 档位类型: 
+    // 0-所有档位
+    // 1-月卡
+    // 2-季卡
+    // 3-年卡
+    // 4-连续月卡
+    // 5-连续季卡
+    // 6-连续年卡
+    // 7-赠送月卡
+    // 8-赠送季卡
+    // 9-赠送连续年卡
+    // 10-7日卡
+    // 11-赠送7日卡
+    int32 card_type = 3;
+}
+
+message DefaultPaginateReq {
+    // 页码
+    int32 page_num = 1;
+    // 每页数量
+    int32 page_size = 2;
+}
+
+message DefaultResponse {
+    int32 code = 1;
+    string msg = 2;
+    EmptyData data = 3;
+}
+
+message ListCardSetsResp {
+    int32 code = 1;
+    string msg = 2;
+    ListCardSetsData data = 3;
+}
+
+message ListCardSetsData {
+    int32 total_count = 1;
+    repeated CardSet list = 2;
+}
+
+message ListCardSetGroupsReq {
+    // 页码
+    // @gt:0
+    int32 page_num = 1;
+    // 每页数量
+    // @gt:0
+    int32 page_size = 2;
+    // 平台 0-双端 1-ios 2-安卓
+    // @in:[0,1,2]
+    int32 platform = 3;
+}
+
+message ListCardSetGroupsResp {
+    int32 code = 1;
+    string msg = 2;
+    ListCardSetGroupsData data = 3;
+}
+
+message ListCardSetGroupsData {
+    int32 total_count = 1;
+    repeated CardSetGroup list = 2;
+}
+
+message CardSetGroup {
+    int32 id = 1;
+    // 标题
+    string title = 2;
+    // 档位ID
+    repeated int32 card_set_ids = 3;
+    // 推送类型 1.全局 2.人群包
+    int32 push_type = 4;
+    // 人群包ID
+    repeated int32 user_group_ids = 5;
+    // 权重
+    int32 weight = 6;
+    // 开始时间 2006-01-02 15:04:05
+    string start_time = 7;
+    // 结束时间 2006-01-02 15:04:05(保持上线:1970-01-01 08:01:00)
+    string end_time = 8;
+    // 操作人(创建/编辑时不传)
+    string cuser = 9;
+    // 创建时间(创建/编辑时不传)
+    string ctime = 10;
+    // 修改时间(创建/编辑时不传)
+    string mtime = 11;
+    // 上下线状态 1-上线 2-下线 3-待上线(创建/编辑时不传)
+    int32 status = 12;
+    // 平台 0-双端 1-ios 2-安卓
+    // @in:[0,1,2]
+    int32 platform = 13;
+}
+
+message CardSet {
+    // ID(创建时不传)
+    int32 id = 1;
+    // 名称
+    string title = 2;
+    // 实际价格(分)
+    int32 gold = 3;
+    // 虚拟、原价格(分)
+    int32 origin_gold = 4;
+    // 档位类型: 
+    // 1-月卡 
+    // 2-季卡 
+    // 3-年卡 
+    // 4-连续月卡 
+    // 5-连续季卡
+    // 6-连续年卡
+    // 7-赠送月卡 
+    // 8-赠送季卡
+    // 9-赠送连续年卡
+    // 10-7日卡
+    // 11-赠送7日卡
+    int32 card_type = 5;
+    // 角标文案
+    string icon_txt = 6;
+    // 宣传文案
+    string ad_txt = 7;
+    // 增发数量
+    int32 extra_amount = 8;
+    // 操作人(创建/编辑时不传)
+    string cuser = 9;
+    // 创建时间(创建/编辑时不传)
+    string ctime = 10;
+    // 修改时间(创建/编辑时不传)
+    string mtime = 11;
+    // 首购优惠价格(分), 没有则传0
+    int32 discount_first_gold = 12;
+    // 优惠开始时间2006-01-02 15:04:05, 没有则不传或者传空字符串
+    string discount_start_time = 13;
+    // 优惠结束时间2006-01-02 15:04:05, 没有或者保持上线则不传或者传空字符串
+    string discount_end_time = 14;
+    // ios商品ID
+    string product_id = 15;
+    // 微信模版 id
+    string plan_id = 16;
+    // 首购角标文案
+    string first_icon_txt = 17;
+    // 首购宣传文案
+    string first_ad_txt = 18;
+    // 复购赠送额外数量
+    int32 second_extra_amount = 19;
+    // 复购赠送开始时间 (因为原来的接口中时间都是不带时区信息的，这次新加也不带把)
+    string second_start_time = 20;
+    // 复购赠送结束时间(保持上线传 9999-12-31 23:59:59)
+    string second_end_time = 21;
+    // 是否开启首周3元周卡
+    bool has_first_week_card = 22;   
+    // 限时特价 单位(分)
+    int32 discount_gold = 23;
+    // 限时特价开始时间 2006-01-02 15:04:05, 没有则不传或者传空字符串
+    string discount_gold_start_time = 24;
+    // 限时特价结束时间2006-01-02 15:04:05, 没有则不传或者传空字符串
+    // 保持上线传 9999-12-31 23:59:59
+    string discount_gold_end_time = 25;
+}
+
+message DefaultDeleteReq {
+    // ID
+    int32 id = 1;
+}
+
+message UserCardInfoReq {
+    repeated int64 uids = 1;
+}
+
+message UserCardInfoResp {
+    int32 code = 1;
+    string msg = 2;
+    UserCardData data = 3;
+} 
+
+message UserCardData {
+    // 漫读卡等级
+    // key uid
+    // value 0 未开通 1 已开通
+    map<int64, int32> card_levels = 2;
+    // 漫友俱乐部等级
+    // key uid
+    // value level等级 1-6
+    map<int64, int32> club_levels = 3;
+}
+
+message AddCardCoverReq {
+    // 新增不传 id，编辑带 id
+    int32 id = 1;
+    // 卡面名称
+    string title = 2;
+    // 卡面封面
+    string cover = 3;
+    string resource = 4;
+    // 卡片获取方式
+    // 0-开卡即得
+    // 1-定向发放
+    int32 type = 5;
+    // time.RFC3339 格式，带时区信息
+    string start_time = 6;
+    // time.RFC3339 格式，带时区信息,保持上线(1970-01-01T08:01:00Z)
+    string end_time = 7;
+    // 操作人，仅列表展示时使用
+    string cuser = 8;
+    // time.RFC3339 格式，带时区信息，仅列表展示时使用
+    string mtime = 9;
+    // 资源版本 0 默认 1 包含 mp4
+    int32 uri_type = 10;
+    // 封面渐变色
+    string gradient_color_top = 11;
+    string gradient_color_bottom = 12;
+    // 版本
+    // 1 起始版本
+    // 2 资源数据结构发生变更
+    // 3 新的空间背景资源
+    int32 version = 13;
+    // 关联的漫画 不关联传0
+    int32 comic_id = 14;
+}
+
+message DelCardCoverReq {
+    int32 id = 1;
+}
+
+message ListCardCoversReq {
+    int32 page_num = 1;
+    int32 page_size = 2;
+    // 版本
+    // 1 起始版本
+    // 2 资源数据结构发生变更
+    int32 version = 3;
+}
+
+message ListCardCoversResp {
+    int32 code = 1;
+    string msg = 2;
+    ListCardCovers data = 3;
+}
+
+message ListCardCovers {
+    // 总卡面数量
+    int32 total = 1;
+    repeated AddCardCoverReq cards = 2;
+}
+
+message AddSendPlanReq {
+    // 新增的时候不传值或者传0
+    int32 id = 1;
+    // 发放说明
+    string description = 2;
+    // 档位 id / 卡面 id，档位中的主键 id
+    int32 product_id = 3;
+    // 指定少数人 uid 发送
+    repeated int64 uids = 4;
+    // csv 文件
+    string csv = 5;
+    // 操作人
+    // 仅列表查询时使用
+    string cuser = 6;
+    // 创建时间，时间格式 time.RFC3339, 带时区信息
+    string ctime = 7;
+    // 2-卡面发方
+    // 3-畅读卡发放
+    // 5-发放通用券
+    // 7-特典发放
+    // 8-发放套装
+    // 9-发放挂件
+    int32 type = 8;
+    // 发放状态，仅列表展示时使用
+    // 0-未开始发放
+    // 1-发放中
+    // 2-发放成功
+    // 3-发放失败
+    int32 status = 9;
+    // 当发放产品是畅读卡时，这里显示的是畅读卡类型
+    // 7-免费月卡
+    // 8-免费季卡
+    // 9-免费年卡
+    int32 product_type = 10;
+    // 发放数量
+    // 当类型是发放套装/挂件/卡面的时候，此处是指发放的天数。永久就是math.MaxInt32
+    int32 amount = 11;
+    // 发放内容,当类型是 5 时，该内容会展示到客户端上
+    string content = 12;
+    // 定时发送时间 RFC3339 立即 0001-01-01T00:00:00Z
+    string send_time = 13;
+}
+
+message ListSendPlansReq {
+    // 2-卡面发放
+    // 3-畅读卡发放
+    int32 type = 1;
+    int32 page_num = 2;
+    int32 page_size = 3;
+}
+
+message ListSendPlansResp {
+    int32 code = 1;
+    string msg = 2;
+    ListSendPlans data = 3;
+}
+
+message ListSendPlans {
+    // 总的发放数量
+    int32 total = 1;
+    repeated AddSendPlanReq plan = 2;
+}
