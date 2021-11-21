@@ -21,7 +21,10 @@ lint:
 	go list ./... | grep -v /vendor/ | xargs -L1 golint -set_exit_status
 
 run:
-	protoc --swift_out=. --twirp-swift_out=. ./service.proto
+	protoc --swift_out=. rpc/document.proto && \
+	protoc --swift_out=. --twirp-swift_out=. service.proto
+
+
 
 build_native:
 	go build -o ${GOPATH}/bin/${BINARY} ${LDFLAGS} github.com/callesvedin/protoc-gen-twirp-swift

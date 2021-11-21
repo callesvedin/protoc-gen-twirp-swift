@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	//bs, err := ioutil.ReadFile("./input.bs")
+	//bs, err := ioutil.ReadFile("./cca_input.bs")
 	//if err != nil {
 	//	return
 	//}

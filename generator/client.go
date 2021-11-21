@@ -39,14 +39,16 @@ type ModelField struct {
 
 type Service struct {
 	Name                  string
+	ClassName             string
 	ServicePathPrefixName string
 	Package               string
 	Methods               []ServiceMethod
 }
 
-func (s Service) ClassName() string {
-	return strings.ToUpper(s.Package[:1]) + s.Package[1:] + s.Name
-}
+//func (s Service) ClassName() string {
+//	return s.ClassName
+//	//return strings.ToUpper(s.Package[:1]) + s.Package[1:] + s.Name
+//}
 
 type ServiceMethod struct {
 	Name       string
@@ -116,33 +118,51 @@ func (ctx *APIContext) ApplyImports(d *descriptor.FileDescriptorProto) {
 	ctx.Imports = deps
 }
 
+func getClassName(d *descriptor.FileDescriptorProto, pkg string, sName string) string {
+	if d.Options.SwiftPrefix != nil {
+		return *d.Options.SwiftPrefix + sName
+	} else {
+		return strings.ToUpper(pkg[:1]) + pkg[1:] + sName
+	}
+}
+
+func getClientName(d *descriptor.FileDescriptorProto, pkg string) string {
+	if d.Options.SwiftPrefix != nil {
+		return *d.Options.SwiftPrefix + "Client"
+	} else {
+		return strings.ToUpper(pkg[:1]) + pkg[1:] + "Client"
+	}
+}
+
 func CreateClientAPI(d *descriptor.FileDescriptorProto, generator *generator.Generator) (*plugin_go.CodeGeneratorResponse_File, error) {
 	ctx := NewAPIContext()
 	pkg := d.GetPackage()
-	ctx.ClientName = strings.ToUpper(pkg[:1]) + pkg[1:] + "Client"
+	ctx.ClientName = getClientName(d, pkg)
 
 	// Parse all Services for generating swift method interfaces and default client implementations
 	for _, s := range d.GetService() {
 		serviceName := s.GetName()
 		service := &Service{
 			Name:                  serviceName,
+			ClassName:             getClassName(d, pkg, serviceName),
 			Package:               pkg,
 			ServicePathPrefixName: strings.ToLower(serviceName[0:1]) + serviceName[1:] + "ServicePrefix",
 		}
 
 		for _, m := range s.GetMethod() {
+			m.GetInputType()
 			methodPath := m.GetName()
 			methodName := strings.ToLower(methodPath[0:1]) + methodPath[1:]
 			in := removePkg(m.GetInputType())
 			arg := strings.ToLower(in[0:1]) + in[1:]
-			in = toSnake(m.GetInputType()[1:])
+			in = getTypeName(d, m.GetInputType())
 
 			method := ServiceMethod{
 				Name:       methodName,
 				Path:       methodPath,
 				InputArg:   arg,
 				InputType:  in,
-				OutputType: toSnake(m.GetOutputType()[1:]),
+				OutputType: getTypeName(d, m.GetOutputType()),
 			}
 
 			service.Methods = append(service.Methods, method)
@@ -176,6 +196,14 @@ func CreateClientAPI(d *descriptor.FileDescriptorProto, generator *generator.Gen
 	cf.Content = proto.String(b.String())
 
 	return cf, nil
+}
+
+func getTypeName(d *descriptor.FileDescriptorProto, s string) string {
+	if d.Options.SwiftPrefix != nil {
+		return *d.Options.SwiftPrefix + removePkg(s)
+	} else {
+		return toSnake(s[1:])
+	}
 }
 
 func removePkg(s string) string {

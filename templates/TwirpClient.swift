@@ -24,7 +24,7 @@ class {{.ClientName}} {
 
         do {
             return try M(jsonUTF8Data: data)
-        }catch is BinaryDecodingError {
+        } catch is BinaryDecodingError {
             throw TwirpError.decodeError(withData: String(decoding: data, as: UTF8.self))
         }
 
@@ -36,7 +36,7 @@ class {{.ClientName}} {
         }
         do {
             return try M(serializedData: data)
-        }catch is BinaryDecodingError {
+        } catch is BinaryDecodingError {
             throw TwirpError.decodeError(withData: String(decoding: data, as: UTF8.self))
         }
     }
