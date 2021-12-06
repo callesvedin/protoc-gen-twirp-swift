@@ -17,3 +17,4 @@ It will also need the swift protobuf plugin from Apple (https://github.com/apple
     
 All generated files will be placed relative to the specified output directory for the plugin.  
 Note that there can not same files in module, the generate files will named with namespace.
+    

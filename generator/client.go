@@ -2,29 +2,33 @@ package generator
 
 import (
 	"bytes"
+	_ "embed" // Used by go:embed
 	"fmt"
-	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
-	"github.com/gogo/protobuf/protoc-gen-gogo/generator"
-	"google.golang.org/protobuf/proto"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
 	"text/template"
 	"unicode"
 
+	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
+	"github.com/gogo/protobuf/protoc-gen-gogo/generator"
+	"google.golang.org/protobuf/proto"
+
 	plugin_go "github.com/gogo/protobuf/protoc-gen-gogo/plugin"
 )
 
-type Model struct {
+//go:embed templates/TwirpClient.swift
+var apiTemplate string
+
+type model struct {
 	Name         string
 	Primitive    bool
-	Fields       []ModelField
+	Fields       []modelField
 	CanMarshal   bool
 	CanUnmarshal bool
 }
 
-type ModelField struct {
+type modelField struct {
 	Name          string
 	Type          string
 	InternalType  string
@@ -33,24 +37,19 @@ type ModelField struct {
 	IsMessage     bool
 	IsRepeated    bool
 	IsMap         bool
-	MapKeyField   *ModelField
-	MapValueField *ModelField
+	MapKeyField   *modelField
+	MapValueField *modelField
 }
 
-type Service struct {
+type service struct {
 	Name                  string
 	ClassName             string
 	ServicePathPrefixName string
 	Package               string
-	Methods               []ServiceMethod
+	Methods               []serviceMethod
 }
 
-//func (s Service) ClassName() string {
-//	return s.ClassName
-//	//return strings.ToUpper(s.Package[:1]) + s.Package[1:] + s.Name
-//}
-
-type ServiceMethod struct {
+type serviceMethod struct {
 	Name       string
 	Path       string
 	InputArg   string
@@ -58,36 +57,36 @@ type ServiceMethod struct {
 	OutputType string
 }
 
-func NewAPIContext() APIContext {
-	ctx := APIContext{}
-	ctx.modelLookup = make(map[string]*Model)
+func newAPIContext() apiContext {
+	ctx := apiContext{}
+	ctx.modelLookup = make(map[string]*model)
 
 	return ctx
 }
 
-type APIContext struct {
-	Models      []*Model
-	Services    []*Service
-	Imports     []Import
+type apiContext struct {
+	Models      []*model
+	Services    []*service
+	Imports     []importPath
 	ClientName  string
-	modelLookup map[string]*Model
+	modelLookup map[string]*model
 }
 
-type Import struct {
+type importPath struct {
 	Path string
 }
 
-func (ctx *APIContext) AddModel(m *Model) {
+func (ctx *apiContext) addModel(m *model) {
 	ctx.Models = append(ctx.Models, m)
 	ctx.modelLookup[m.Name] = m
 }
 
-func (ctx *APIContext) ApplyImports(d *descriptor.FileDescriptorProto) {
-	var deps []Import
+func (ctx *apiContext) applyImports(d *descriptor.FileDescriptorProto) {
+	var deps []importPath
 
 	if len(ctx.Services) > 0 {
-		deps = append(deps, Import{"Foundation"})
-		deps = append(deps, Import{"SwiftProtobuf"})
+		deps = append(deps, importPath{"Foundation"})
+		deps = append(deps, importPath{"SwiftProtobuf"})
 	}
 
 	for _, dep := range d.Dependency {
@@ -113,7 +112,7 @@ func (ctx *APIContext) ApplyImports(d *descriptor.FileDescriptorProto) {
 			}
 		}
 		// Do not generate model which should do by protoc-gen-swift
-		// deps = append(deps, Import{fullPath})
+		// deps = append(deps, importPath{fullPath})
 	}
 	ctx.Imports = deps
 }
@@ -121,28 +120,27 @@ func (ctx *APIContext) ApplyImports(d *descriptor.FileDescriptorProto) {
 func getClassName(d *descriptor.FileDescriptorProto, pkg string, sName string) string {
 	if d.Options.SwiftPrefix != nil {
 		return *d.Options.SwiftPrefix + sName
-	} else {
-		return strings.ToUpper(pkg[:1]) + pkg[1:] + sName
 	}
+	return strings.ToUpper(pkg[:1]) + pkg[1:] + sName
 }
 
 func getClientName(d *descriptor.FileDescriptorProto, pkg string) string {
 	if d.Options.SwiftPrefix != nil {
 		return *d.Options.SwiftPrefix + "Client"
-	} else {
-		return strings.ToUpper(pkg[:1]) + pkg[1:] + "Client"
 	}
+	return strings.ToUpper(pkg[:1]) + pkg[1:] + "Client"
 }
 
+// CreateClientAPI generates the client api from the proto file
 func CreateClientAPI(d *descriptor.FileDescriptorProto, generator *generator.Generator) (*plugin_go.CodeGeneratorResponse_File, error) {
-	ctx := NewAPIContext()
+	ctx := newAPIContext()
 	pkg := d.GetPackage()
 	ctx.ClientName = getClientName(d, pkg)
 
 	// Parse all Services for generating swift method interfaces and default client implementations
 	for _, s := range d.GetService() {
 		serviceName := s.GetName()
-		service := &Service{
+		service := &service{
 			Name:                  serviceName,
 			ClassName:             getClassName(d, pkg, serviceName),
 			Package:               pkg,
@@ -157,7 +155,7 @@ func CreateClientAPI(d *descriptor.FileDescriptorProto, generator *generator.Gen
 			arg := strings.ToLower(in[0:1]) + in[1:]
 			in = getTypeName(d, m.GetInputType())
 
-			method := ServiceMethod{
+			method := serviceMethod{
 				Name:       methodName,
 				Path:       methodPath,
 				InputArg:   arg,
@@ -170,14 +168,7 @@ func CreateClientAPI(d *descriptor.FileDescriptorProto, generator *generator.Gen
 		ctx.Services = append(ctx.Services, service)
 	}
 
-	ctx.ApplyImports(d)
-
-	fileBytes, err := ioutil.ReadFile("./templates/TwirpClient.swift")
-
-	if err != nil {
-		panic(err)
-	}
-	apiTemplate := string(fileBytes)
+	ctx.applyImports(d)
 
 	t, err := template.New("client_api").Parse(apiTemplate)
 	if err != nil {
@@ -201,9 +192,8 @@ func CreateClientAPI(d *descriptor.FileDescriptorProto, generator *generator.Gen
 func getTypeName(d *descriptor.FileDescriptorProto, s string) string {
 	if d.Options.SwiftPrefix != nil {
 		return *d.Options.SwiftPrefix + removePkg(s)
-	} else {
-		return toSnake(s[1:])
 	}
+	return toSnake(s[1:])
 }
 
 func removePkg(s string) string {

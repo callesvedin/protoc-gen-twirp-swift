@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"strings"
 )
 
 func main() {
@@ -84,21 +83,22 @@ func writeResponse(w io.Writer, resp *plugin_go.CodeGeneratorResponse) {
 	//ioutil.WriteFile("output.swift", data, 0644)
 }
 
-type Params map[string]string
-
-func getParameters(in *plugin_go.CodeGeneratorRequest) Params {
-	params := make(Params)
-
-	if in.Parameter == nil {
-		return params
-	}
-
-	pairs := strings.Split(*in.Parameter, ",")
-
-	for _, pair := range pairs {
-		kv := strings.Split(pair, "=")
-		params[kv[0]] = kv[1]
-	}
-
-	return params
-}
+//
+//type Params map[string]string
+//
+//func getParameters(in *plugin_go.CodeGeneratorRequest) Params {
+//	params := make(Params)
+//
+//	if in.Parameter == nil {
+//		return params
+//	}
+//
+//	pairs := strings.Split(*in.Parameter, ",")
+//
+//	for _, pair := range pairs {
+//		kv := strings.Split(pair, "=")
+//		params[kv[0]] = kv[1]
+//	}
+//
+//	return params
+//}

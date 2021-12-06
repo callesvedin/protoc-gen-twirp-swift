@@ -25,7 +25,6 @@ run:
 	protoc --swift_out=. --twirp-swift_out=. service.proto
 
 
-
 build_native:
 	go build -o ${GOPATH}/bin/${BINARY} ${LDFLAGS} github.com/callesvedin/protoc-gen-twirp-swift
 
